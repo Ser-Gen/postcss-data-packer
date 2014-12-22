@@ -1,7 +1,7 @@
 {
-  "name": "postcss-data-sprite",
-  "version": "1.0.1",
-  "description": "PostCSS plugin to move an embedded data to separate file",
+  "name": "postcss-data-packer",
+  "version": "1.0.2",
+  "description": "PostCSS plugin to move an embedded data into a separate file",
   "keywords": [
     "css",
     "postcss",
@@ -13,6 +13,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ser-Gen/postcss-data-sprite.git"
+    "url": "https://github.com/Ser-Gen/postcss-data-packer.git"
   }
 }

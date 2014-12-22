@@ -1,33 +1,33 @@
-# postcss-data-sprite
+# postcss-data-packer
 
-Обработчик для [`PostCSS`](https://github.com/postcss/postcss), позволяющий выделять закодированные данные в отдельный файл. Может объединять селекторы правил с одинаковыми закодированными данными.
+[`PostCSS`](https://github.com/postcss/postcss) plugin to move an embedded data into a separate file. It can also combine selectors of rules with the same data!
 
-Данные могут быть значениями свойств `background`, `background-image`, `border-image`, `src` (`@font-face`), `content` (псевдоэлементы).
+Embedded data can be used in value of these properties: `background`, `background-image`, `border-image`, `src` (`@font-face`), `content` (pseudoelements).
 
-Для определения данных используется выражение `/url\("?data/g`.
+Regexp `/url\("?data/g` is using to detect a data in values.
 
 
-## Установка
+## Installation
 
 ```
-npm install postcss-data-sprite
+npm install postcss-data-packer
 ```
 
 
-## Использование
+## How to use
 
-### Настройки
+### Options
 
-#### `dataFile` (по умолчанию `true`)
+#### `dataFile` (default: `true`)
 
-У обработчика есть два режима работы: в одном (`dataFile: false`) он удаляет все свойства с данными, в другом (`dataFile: true`) оставляет только их.
+Plugin can work in two modes: `dataFile: false` removes all embedded data from stylesheet, `dataFile: true` removes everything except data.
 
 
-#### `pure` (по умолчанию `true`)
+#### `pure` (default: `true`)
 
-Обработчик может объединять селекторы правил с одинаковыми данными, чтобы минимизировать итоговый файл.
+Plugin can combine selectors of rules with the same data to minimize output.
 
-Селекторы правил, у которых одинаковы свойства и их значения, объединяются в первом встретившимся правиле:
+Selectors are combined in first rule with a corresponding pair property-value of declaration.
 
 ```css
 .a { background-image: url(/*a.png*/); }
@@ -40,38 +40,38 @@ npm install postcss-data-sprite
 .c { background-image: url(/*a.png*/); }
 ```
 
-Эта особенность может привести к проблемам:
+This feature could lead to problems:
 
 ```css
 .a { background-image: url(/*a.png*/) }
 .b { background-image: url(/*b.png*/) }
 .c { background-image: url(/*a.png*/) }
-
+```
 ```css
 .a,
 .c { background-image: url(/*a.png*/) }
 .b { background-image: url(/*b.png*/) }
 ```
 
-у элемента `<div class="b c"></div>` применится стиль `.b`, так как специфичность у него больше, хоть он и объявлен раньше `.c` в основном файле.
+An element `<div class="b c"></div>` will use only styles of `.b` because specifity of `.c` is lower, although `.c` is declared later in main file.
 
-Замечу, что сжатие при помощи `gzip` вполне может заменить эту возможность, дублирующиеся строки хорошо жмутся.
+Note that a reliable `gzip` can replace this function because duplicate rows can be easily compressed.
 
 
-### Подключение
+### Using
 
-Обработчик используется так же, как любой другой для `PostCSS`. Например, так для сборки [Галпом](https://github.com/gulpjs/gulp):
+Plugin can be used just like any other `PostCSS` plugin. For example, [Gulp](https://github.com/gulpjs/gulp) setup:
 
 ```js
 var $ = require('gulp');
 var plugins = require('gulp-load-plugins');
 
-var dataSprite = require('postcss-data-sprite');
+var dataPacker = require('postcss-data-packer');
 
-// удаляем все закодированные данные из основного файла
+// remove all embedded data from main.css
 $.task('processcss', function () {
     var processors = [
-        dataSprite({
+        dataPacker({
             dataFile: false
         })
     ];
@@ -80,10 +80,10 @@ $.task('processcss', function () {
         .pipe($.dest('css/'));
 });
 
-// оставляем только закодированные данные из основного файла и оставляем только уникальные данные
+// remove everything except data
 $.task('processcss--data', function () {
     var processors = [
-        dataSprite({
+        dataPacker({
             dataFile: true,
             pure: true
         })
@@ -99,10 +99,10 @@ $.task('default', function () {
 });
 ```
 
-И затем подключаем эти файлы в разметке:
+And then declare these files in the markup:
 
 ```html
-<!-- До основного файла, чтобы упростить переопределение -->
+<!-- Data is before main styles to simplify the redefinition of declarations -->
 <link rel="stylesheet" href="main_data.css">
 <link rel="stylesheet" href="main.css">
 ```
