@@ -97,8 +97,7 @@ module.exports = function (opts) {
 
       // для добавления в селектор только недостающего
       function cleanSelector (o) {
-        o.replace(/\s*,\s*/g, ",");
-        var a = o.split(',');
+        var a = o.replace(/\s*,\s*/g, ",").replace(/\n/g, "").split(',');
 
         a = a.filter( function( item, index, inputArray ) {
           return inputArray.indexOf(item) == index;
