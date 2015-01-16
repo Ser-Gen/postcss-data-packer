@@ -32,13 +32,13 @@ module.exports = function (opts) {
           if (!(/url\("?data/g.test(decl.value))) {
             decl.removeSelf();
           };
-          if (rule.childs.length === 0) {
+          if (rule.nodes.length === 0) {
             rule.removeSelf();
           };
         });
       });
       css.eachAtRule(function (atRule) {
-        if (atRule.childs.length === 0) {
+        if (atRule.nodes.length === 0) {
           atRule.removeSelf();
         };
       });
@@ -72,8 +72,8 @@ module.exports = function (opts) {
             } else if (index >= 0) {
 
               // собираем селекторы с одинаковыми данными
-              css.childs[index].selector += ','+ rule.selector;
-              css.childs[index].selector = cleanSelector(css.childs[index].selector);
+              css.nodes[index].selector += ','+ rule.selector;
+              css.nodes[index].selector = cleanSelector(css.nodes[index].selector);
 
               decl.removeSelf();
             };
@@ -82,14 +82,14 @@ module.exports = function (opts) {
             helper[decl.prop] = arr;
 
           });
-          if (rule.childs.length === 0) {
+          if (rule.nodes.length === 0) {
             rule.removeSelf();
           };
         });
 
         // после слияния правил могут остаться пустые медиавыражения
         css.eachAtRule(function (atRule) {
-          if (atRule.childs.length === 0) {
+          if (atRule.nodes.length === 0) {
             atRule.removeSelf();
           };
         });
@@ -126,7 +126,7 @@ module.exports = function (opts) {
           if (/url\("?data/g.test(decl.value)) {
             decl.removeSelf();
           };
-          if (rule.childs.length === 0) {
+          if (rule.nodes.length === 0) {
             rule.removeSelf();
           };
         });
