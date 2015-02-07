@@ -123,7 +123,7 @@ module.exports = function (opts) {
     function removeData () {
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (/url\("?data/g.test(decl.value)) {
+          if (/url\(["']?data/g.test(decl.value)) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
@@ -135,7 +135,7 @@ module.exports = function (opts) {
         if (atRule.name === 'font-face') {
           atRule.eachDecl(function (decl, j) {
             if (decl.prop === 'src') {
-              if (/url\("?data/g.test(decl.value)) {
+              if (/url\(["']?data/g.test(decl.value)) {
                 atRule.removeSelf();
               };
             };
