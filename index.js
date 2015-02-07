@@ -29,7 +29,7 @@ module.exports = function (opts) {
       // удаляем свойства и правила без данных
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (!(/url\("?data/g.test(decl.value))) {
+          if (!(/url\(["']?data/g.test(decl.value))) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
