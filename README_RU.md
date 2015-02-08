@@ -4,7 +4,7 @@
 
 Данные могут быть значениями свойств `background`, `background-image`, `border-image`, `src` (`@font-face`), `content` (псевдоэлементы).
 
-Для определения данных используется выражение `/url\("?data/g`.
+Для определения данных используется выражение `/url\(["']?data/g`.
 
 
 ## Установка
@@ -60,7 +60,7 @@ npm install postcss-data-packer
 
 ### Подключение
 
-Обработчик используется так же, как любой другой для `PostCSS`. Например, так для сборки [Галпом](https://github.com/gulpjs/gulp):
+Обработчик используется так же, как любой другой для `PostCSS`. Например, так для сборки [Галпом](https://github.com/gulpjs/gulp) (используется [gulp-postcss](https://github.com/w0rm/gulp-postcss)):
 
 ```js
 var $ = require('gulp');
@@ -97,6 +97,45 @@ $.task('processcss--data', function () {
 $.task('default', function () {
     $.watch('css/main.css', ['processcss', 'processcss--data']);
 });
+```
+
+А так можно настроить сборку [Грантом](https://github.com/gruntjs/grunt) (используется [grunt-postcss](https://github.com/nDmitry/grunt-postcss)):
+
+```js
+module.exports = function(grunt) {
+    'use strict';
+    require('load-grunt-tasks')(grunt);
+
+    var dataPaker = require('postcss-data-packer');
+
+    grunt.initConfig({
+        postcss: {
+            data: {
+                options: {
+                    map: false,
+                    processors: [
+                        dataPaker()
+                    ]
+                },
+                src: 'css/main.css',
+                dest: 'css/main_data.css'
+            },
+            pure: {
+                options: {
+                    map: false,
+                    processors: [
+                        dataPaker({
+                            dataFile: false
+                        })
+                    ]
+                },
+                src: 'css/main.css'
+            }
+        }
+    });
+
+    return grunt.registerTask('default', ['postcss']);
+};
 ```
 
 И затем подключаем эти файлы в разметке:

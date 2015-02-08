@@ -4,7 +4,9 @@
 
 Embedded data can be used in value of these properties: `background`, `background-image`, `border-image`, `src` (`@font-face`), `content` (pseudoelements).
 
-Regexp `/url\("?data/g` is using to detect a data in values.
+Regexp `/url\(["']?data/g` is using to detect a data in values.
+
+Этот документ [по-русски](https://github.com/Ser-Gen/postcss-data-packer/blob/master/README_RU.md).
 
 
 ## Installation
@@ -60,7 +62,7 @@ Note that a reliable `gzip` can replace this function because duplicate rows can
 
 ### Using
 
-Plugin can be used just like any other `PostCSS` plugin. For example, [Gulp](https://github.com/gulpjs/gulp) setup:
+Plugin can be used just like any other `PostCSS` plugin. For example, [Gulp](https://github.com/gulpjs/gulp) setup (using [gulp-postcss](https://github.com/w0rm/gulp-postcss)):
 
 ```js
 var $ = require('gulp');
@@ -90,13 +92,52 @@ $.task('processcss--data', function () {
     ];
     $.src('css/main.css')
         .pipe(plugins().postcss(processors))
-        .pipe(plugins().rename('main_data.css')) // создаём новый файл
+        .pipe(plugins().rename('main_data.css')) // new file
         .pipe($.dest('css/'));
 });
 
 $.task('default', function () {
     $.watch('css/main.css', ['processcss', 'processcss--data']);
 });
+```
+
+And [Grunt](https://github.com/gruntjs/grunt) setup (using [grunt-postcss](https://github.com/nDmitry/grunt-postcss)):
+
+```js
+module.exports = function(grunt) {
+    'use strict';
+    require('load-grunt-tasks')(grunt);
+
+    var dataPaker = require('postcss-data-packer');
+
+    grunt.initConfig({
+        postcss: {
+            data: {
+                options: {
+                    map: false,
+                    processors: [
+                        dataPaker()
+                    ]
+                },
+                src: 'css/main.css',
+                dest: 'css/main_data.css'
+            },
+            pure: {
+                options: {
+                    map: false,
+                    processors: [
+                        dataPaker({
+                            dataFile: false
+                        })
+                    ]
+                },
+                src: 'css/main.css'
+            }
+        }
+    });
+
+    return grunt.registerTask('default', ['postcss']);
+};
 ```
 
 And then declare these files in the markup:

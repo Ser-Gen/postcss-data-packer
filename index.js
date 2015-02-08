@@ -1,12 +1,13 @@
 module.exports = function (opts) {
   return function (css) {
 
-    opts = opts || true;
+    opts = opts || {};
 
     var defs = {
       dataFile: true,
       pure: true
     };
+    var dataRegexp = /url\(["']?data/g;
 
     opts = extend(defs, opts);
 
@@ -29,7 +30,7 @@ module.exports = function (opts) {
       // удаляем свойства и правила без данных
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (!(/url\(["']?data/g.test(decl.value))) {
+          if (!(dataRegexp.test(decl.value))) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
@@ -123,7 +124,7 @@ module.exports = function (opts) {
     function removeData () {
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (/url\(["']?data/g.test(decl.value)) {
+          if (dataRegexp.test(decl.value)) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
@@ -135,7 +136,7 @@ module.exports = function (opts) {
         if (atRule.name === 'font-face') {
           atRule.eachDecl(function (decl, j) {
             if (decl.prop === 'src') {
-              if (/url\(["']?data/g.test(decl.value)) {
+              if (dataRegexp.test(decl.value)) {
                 atRule.removeSelf();
               };
             };
