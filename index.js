@@ -30,7 +30,7 @@ module.exports = function (opts) {
       // удаляем свойства и правила без данных
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (!(dataRegexp.test(decl.value))) {
+          if (!decl.value.match(dataRegexp)) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
@@ -39,7 +39,7 @@ module.exports = function (opts) {
         });
       });
       css.eachAtRule(function (atRule) {
-        if (atRule.nodes.length === 0) {
+        if (atRule.nodes && atRule.nodes.length === 0) {
           atRule.removeSelf();
         };
       });
@@ -90,7 +90,7 @@ module.exports = function (opts) {
 
         // после слияния правил могут остаться пустые медиавыражения
         css.eachAtRule(function (atRule) {
-          if (atRule.nodes.length === 0) {
+          if (atRule.nodes && atRule.nodes.length === 0) {
             atRule.removeSelf();
           };
         });
@@ -124,7 +124,7 @@ module.exports = function (opts) {
     function removeData () {
       css.eachRule(function (rule, i) {
         rule.eachDecl(function (decl, j) {
-          if (dataRegexp.test(decl.value)) {
+          if (decl.value.match(dataRegexp)) {
             decl.removeSelf();
           };
           if (rule.nodes.length === 0) {
@@ -136,7 +136,7 @@ module.exports = function (opts) {
         if (atRule.name === 'font-face') {
           atRule.eachDecl(function (decl, j) {
             if (decl.prop === 'src') {
-              if (dataRegexp.test(decl.value)) {
+              if (decl.value.match(dataRegexp)) {
                 atRule.removeSelf();
               };
             };

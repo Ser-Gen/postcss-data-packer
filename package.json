@@ -1,6 +1,6 @@
 {
   "name": "postcss-data-packer",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "PostCSS plugin to move an embedded data into a separate file",
   "keywords": [
     "css",
