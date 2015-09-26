@@ -6,7 +6,12 @@ Embedded data can be used in value of these properties: `background`, `backgroun
 
 Regexp `/url\(["']?data/g` is using to detect a data in values.
 
-Этот документ [по-русски](https://github.com/Ser-Gen/postcss-data-packer/blob/master/README_RU.md).
+
+---
+
+Этот документ [по-русски](https://github.com/Ser-Gen/postcss-data-packer/blob/master/README.ru.md).
+
+---
 
 
 ## Installation
@@ -60,44 +65,62 @@ An element `<div class="b c"></div>` will use only styles of `.b` because specif
 Note that a reliable `gzip` can replace this function because duplicate rows can be easily compressed.
 
 
+#### `dest` (default: `false`)
+
+You can generate data file directly by plugin.
+
+Define by `dest.path` path of saving data file.
+
+`dest.map` (default: `false`) is for set up source map creation of data file. You can set it up like in `PostCSS` [manual](https://github.com/postcss/postcss#source-map).
+
+If you do not want inline source map, you can set path for it by `annotation`. This path is relative to data file.
+
+In next case you will get two files: `/css/main_data.css` and `/css/maps/main_data.css.map`.
+
+```js
+dataPacker({
+	dest: {
+		path: 'css/main_data.css',
+		map: {
+			inline: false,
+			annotation: 'maps/main_data.css.map'
+		}
+	}
+})
+```
+
+If you do not need source map, you can set path for saving just like this:
+
+```js
+dataPacker({
+	dest: 'css/main_data.css'
+})
+```
+
+
 ### Using
 
 Plugin can be used just like any other `PostCSS` plugin. For example, [Gulp](https://github.com/gulpjs/gulp) setup (using [gulp-postcss](https://github.com/w0rm/gulp-postcss)):
 
 ```js
-var $ = require('gulp');
-var plugins = require('gulp-load-plugins');
+var gulp = require('gulp');
+var rename = require('gulp-rename');
 
-var dataPacker = require('postcss-data-packer');
+var postcss = require('gulp-postcss');
 
-// remove all embedded data from main.css
-$.task('processcss', function () {
-    var processors = [
-        dataPacker({
-            dataFile: false
-        })
-    ];
-    $.src('css/main.css')
-        .pipe(plugins().postcss(processors))
-        .pipe($.dest('css/'));
+gulp.task('processcss', function () {
+	var processors = [
+		require('postcss-data-packer')({
+			dest: 'css/main_data.css'
+		})
+	];
+	gulp.src('css/main.css')
+		.pipe(postcss(processors))
+		.pipe(gulp.dest('css'));
 });
 
-// remove everything except data
-$.task('processcss--data', function () {
-    var processors = [
-        dataPacker({
-            dataFile: true,
-            pure: true
-        })
-    ];
-    $.src('css/main.css')
-        .pipe(plugins().postcss(processors))
-        .pipe(plugins().rename('main_data.css')) // new file
-        .pipe($.dest('css/'));
-});
-
-$.task('default', function () {
-    $.watch('css/main.css', ['processcss', 'processcss--data']);
+gulp.task('default', function () {
+	gulp.watch('css/main.css', ['processcss']);
 });
 ```
 
@@ -105,40 +128,29 @@ And [Grunt](https://github.com/gruntjs/grunt) setup (using [grunt-postcss](https
 
 ```js
 module.exports = function(grunt) {
-    'use strict';
-    require('load-grunt-tasks')(grunt);
+	require('load-grunt-tasks')(grunt);
 
-    var dataPaker = require('postcss-data-packer');
+	grunt.initConfig({
+		postcss: {
+			files: {
+				options: {
+					map: false,
+					processors: [
+						require('postcss-data-packer')({
+							dest: 'css/main_data.css'
+						})
+					]
+				},
+				src: 'css/main.css'
+			}
+		}
+	});
 
-    grunt.initConfig({
-        postcss: {
-            data: {
-                options: {
-                    map: false,
-                    processors: [
-                        dataPaker()
-                    ]
-                },
-                src: 'css/main.css',
-                dest: 'css/main_data.css'
-            },
-            pure: {
-                options: {
-                    map: false,
-                    processors: [
-                        dataPaker({
-                            dataFile: false
-                        })
-                    ]
-                },
-                src: 'css/main.css'
-            }
-        }
-    });
-
-    return grunt.registerTask('default', ['postcss']);
+	return grunt.registerTask('default', ['postcss']);
 };
 ```
+
+(see other usage options [in docs](https://github.com/postcss/postcss#usage) of `PostCSS`)
 
 And then declare these files in the markup:
 

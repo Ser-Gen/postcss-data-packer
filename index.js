@@ -1,157 +1,246 @@
-module.exports = function (opts) {
-  return function (css) {
+var path = require('path');
 
-    opts = opts || {};
+var fsExtra = require('fs-extra');
+var postcss = require('postcss');
 
-    var defs = {
-      dataFile: true,
-      pure: true
-    };
-    var dataRegexp = /url\(["']?data/g;
+var dataRegexp = /url\(["']?data/g;
 
-    opts = extend(defs, opts);
+module.exports = postcss.plugin('postcss-data-packer', plugin);
 
-    if (opts.dataFile) {
-      getData();
-    } else {
-      removeData();
-    };
+function plugin (opts) {
+	opts = opts || {};
 
-    // записываем данные
-    function getData () {
+	var defs = {
+		dataFile: true,
+		pure: true,
+		dest: false,
+		map: false
+	};
 
-      var helper = {};
+	opts = extend(defs, opts);
 
-      // удаляем комментарии
-      css.eachComment(function (comment) {
-        comment.removeSelf();
-      });
+	return function (css, result) {
 
-      // удаляем свойства и правила без данных
-      css.eachRule(function (rule, i) {
-        rule.eachDecl(function (decl, j) {
-          if (!decl.value.match(dataRegexp)) {
-            decl.removeSelf();
-          };
-          if (rule.nodes.length === 0) {
-            rule.removeSelf();
-          };
-        });
-      });
-      css.eachAtRule(function (atRule) {
-        if (atRule.nodes && atRule.nodes.length === 0) {
-          atRule.removeSelf();
-        };
-      });
+		if (opts.dest !== false) {
+			generateDataFile(css, opts);
+		}
+		else if (opts.dataFile) {
+			getData(css, opts);
+		}
+		else {
+			removeData(css);
+		};
 
-      if (opts.pure) {
+	};
+};
 
-        // очищаем итоговый файл от дубликатов данных
-        css.eachRule(function (rule, i) {
-          rule.eachDecl(function (decl, j) {
 
-            var arr;
+// оставляем только данные
+function getData (css, opts) {
+	var helper = {};
 
-            if (!helper.hasOwnProperty(decl.prop)) {
-              helper[decl.prop] = [];
-            };
+	// удаляем комментарии
+	css.walkComments(function (comment) {
+		comment.remove();
+	});
 
-            // запоминаем массив положений нужного свойства
-            arr = helper[decl.prop];
+	// удаляем свойства и правила без данных
+	css.walkRules(function (rule, i) {
+		rule.walkDecls(function (decl, j) {
+			if (!decl.value.match(dataRegexp)) {
+				decl.remove();
+			};
 
-            // получили индекс правила с нужным фоном
-            // если он есть
-            var index = findValue(arr, decl.value);
+			if (rule.nodes.length === 0) {
+				rule.remove();
+			};
+		});
+	});
+	css.walkAtRules(function (atRule) {
+		if (atRule.nodes && atRule.nodes.length === 0) {
+			atRule.remove();
+		};
 
-            if ((arr.length === 0) || (index < 0)) {
+		if (atRule.name === 'font-face') {
+			atRule.walkDecls(function (decl, j) {
+				if (decl.prop === 'src') {
+					if (!decl.value.match(dataRegexp)) {
+						atRule.remove();
+					};
+				};
+			});
+		};
+	});
 
-              // запоминаем уникальные данные
-              arr.push({
-                pos: i,
-                val: decl.value
-              });
-            } else if (index >= 0) {
+	if (opts.pure) {
 
-              // собираем селекторы с одинаковыми данными
-              css.nodes[index].selector += ','+ rule.selector;
-              css.nodes[index].selector = cleanSelector(css.nodes[index].selector);
+		// очищаем итоговый файл от дубликатов данных
+		css.walkRules(function (rule, i) {
+			rule.walkDecls(function (decl, j) {
 
-              decl.removeSelf();
-            };
+				var arr;
 
-            // сохраняем нужный массив положений свойства
-            helper[decl.prop] = arr;
+				if (!helper.hasOwnProperty(decl.prop)) {
+					helper[decl.prop] = [];
+				};
 
-          });
-          if (rule.nodes.length === 0) {
-            rule.removeSelf();
-          };
-        });
+				// запоминаем массив положений нужного свойства
+				arr = helper[decl.prop];
 
-        // после слияния правил могут остаться пустые медиавыражения
-        css.eachAtRule(function (atRule) {
-          if (atRule.nodes && atRule.nodes.length === 0) {
-            atRule.removeSelf();
-          };
-        });
-      };
+				// получили индекс правила с нужными данными
+				// если он есть
+				var index = findValue(arr, decl.value);
 
-      // для добавления в селектор только недостающего
-      function cleanSelector (o) {
-        var a = o.replace(/\s*,\s*/g, ",").replace(/\n/g, "").split(',');
+				if ((arr.length === 0) || (index < 0)) {
 
-        a = a.filter( function( item, index, inputArray ) {
-          return inputArray.indexOf(item) == index;
-        });
+					// запоминаем уникальные данные
+					arr.push({
+						pos: i,
+						val: purifyValue(decl.value)
+					});
+				}
+				else if (index >= 0) {
 
-        return a.join(',\n');
-      };
+					// собираем селекторы с одинаковыми данными
+					css.nodes[index].selector += ','+ rule.selector;
+					css.nodes[index].selector = cleanSelector(css.nodes[index].selector);
 
-      // для поиска сохранённого значения
-      function findValue (arr, value) {
-        for (var i = arr.length - 1; i >= 0; i--) {
-          if (arr[i].val === value) {
-            return arr[i].pos;
-          };
-          if (i === 0) {
-            return -1;
-          };
-        };
-      };
-    };
+					decl.remove();
+				};
 
-    // удаляем данные
-    function removeData () {
-      css.eachRule(function (rule, i) {
-        rule.eachDecl(function (decl, j) {
-          if (decl.value.match(dataRegexp)) {
-            decl.removeSelf();
-          };
-          if (rule.nodes.length === 0) {
-            rule.removeSelf();
-          };
-        });
-      });
-      css.eachAtRule(function (atRule) {
-        if (atRule.name === 'font-face') {
-          atRule.eachDecl(function (decl, j) {
-            if (decl.prop === 'src') {
-              if (decl.value.match(dataRegexp)) {
-                atRule.removeSelf();
-              };
-            };
-          });
-        };
-      });
-    };
+				// сохраняем нужный массив положений свойства
+				helper[decl.prop] = arr;
 
-    function extend (target, source) {
-      var a = Object.create(target);
-      Object.keys(source).map(function (prop) {
-        prop in a && (a[prop] = source[prop]);
-      });
-      return a;
-    };
+			});
 
-  };
+			if (rule.nodes.length === 0) {
+				rule.remove();
+			};
+		});
+
+		// после слияния правил могут остаться пустые медиавыражения
+		css.walkAtRules(function (atRule) {
+			if (atRule.nodes && atRule.nodes.length === 0) {
+				atRule.remove();
+			};
+		});
+	};
+};
+
+
+// удаляем данные
+function removeData (css) {
+	css.walkRules(function (rule, i) {
+		rule.walkDecls(function (decl, j) {
+			if (decl.value.match(dataRegexp)) {
+				decl.remove();
+			};
+
+			if (rule.nodes.length === 0) {
+				rule.remove();
+			};
+		});
+	});
+
+	css.walkAtRules(function (atRule) {
+		if (atRule.name === 'font-face') {
+			atRule.walkDecls(function (decl, j) {
+				if (decl.prop === 'src') {
+					if (decl.value.match(dataRegexp)) {
+						atRule.remove();
+					};
+				};
+			});
+		};
+	});
+};
+
+
+// создаём файл с данными
+// и удаляем данные из основного файла
+function generateDataFile (css, opts) {
+	var dataCSS = postcss.root();
+
+	dataCSS.append(css);
+	getData(dataCSS, opts);
+
+	if (typeof opts.dest === 'string') {
+		opts.dest = {
+			path: opts.dest
+		};
+	};
+
+	if (!opts.dest.map) {
+		opts.dest.map = false;
+	};
+
+	var data = dataCSS.toResult({
+		to: opts.dest.path,
+		map: opts.dest.map
+	});
+
+	fsExtra.outputFileSync(data.opts.to, data.css);
+
+	if (data.map) {
+		fsExtra.outputFileSync(getMapPath(data.opts), data.map.toString());
+	};
+
+	removeData(css);
+};
+
+
+// расширяем объект
+function extend (target, source) {
+	var a = Object.create(target);
+
+	Object.keys(source).map(function (prop) {
+		prop in a && (a[prop] = source[prop]);
+	});
+	return a;
+};
+
+// очищаем селектор
+// для добавления только недостающего
+function cleanSelector (o) {
+	var a = o.replace(/\s*,\s*/g, ",").replace(/\n/g, "").split(',');
+
+	a = a.filter( function( item, index, inputArray ) {
+		return inputArray.indexOf(item) == index;
+	});
+
+	return a.join(',\n');
+};
+
+// ищем сохранённые значения
+function findValue (arr, value) {
+	value = purifyValue(value);
+
+	for (var i = arr.length - 1; i >= 0; i--) {
+		if (arr[i].val === value) {
+			return arr[i].pos;
+		};
+
+		if (i === 0) {
+			return -1;
+		};
+	};
+};
+
+// очищаем значение от кавычек
+function purifyValue (value) {
+	return value.replace(/\(["']/, '(').replace(/["']\)/, ')');
+};
+
+// генерируем пути к карте кода
+function getMapPath (opts) {
+	var result;
+
+	if (opts.map.annotation) {
+		result = path.dirname(opts.to) +'/'+ opts.map.annotation;
+	}
+	else {
+		result = opts.to +'.map';
+	};
+
+	return path.normalize(result);
 };

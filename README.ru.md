@@ -58,44 +58,62 @@ npm install postcss-data-packer
 Замечу, что сжатие при помощи `gzip` вполне может заменить эту возможность, дублирующиеся строки хорошо жмутся.
 
 
+#### `dest` (по умолчанию `false`)
+
+Файл с данными можно генерировать напрямую из плагина. При этом основной файл будет очищен от данных.
+
+Укажите в `dest.path` путь, куда хотите сохранить этот файл.
+
+`dest.map` (по умолчанию `false`) служит для настройки генерации карты кода. Принимает параметры, описанные [в руководстве](https://github.com/postcss/postcss#source-map) `PostCSS`.
+
+Если выбран отдельный файл карты кода, он сохранится по пути, указанному в `annotation`. Этот путь указывается относительно файла с данными.
+
+В следующей ситуации будут созданы файлы `/css/main_data.css` и `/css/maps/main_data.css.map`.
+
+```js
+dataPacker({
+	dest: {
+		path: 'css/main_data.css',
+		map: {
+			inline: false,
+			annotation: 'maps/main_data.css.map'
+		}
+	}
+})
+```
+
+Если карта кода не нужна, нужно лишь указать путь к создаваемому файлу.
+
+```js
+dataPacker({
+	dest: 'css/main_data.css'
+})
+```
+
+
 ### Подключение
 
 Обработчик используется так же, как любой другой для `PostCSS`. Например, так для сборки [Галпом](https://github.com/gulpjs/gulp) (используется [gulp-postcss](https://github.com/w0rm/gulp-postcss)):
 
 ```js
-var $ = require('gulp');
-var plugins = require('gulp-load-plugins');
+var gulp = require('gulp');
+var rename = require('gulp-rename');
 
-var dataPacker = require('postcss-data-packer');
+var postcss = require('gulp-postcss');
 
-// удаляем все закодированные данные из основного файла
-$.task('processcss', function () {
-    var processors = [
-        dataPacker({
-            dataFile: false
-        })
-    ];
-    $.src('css/main.css')
-        .pipe(plugins().postcss(processors))
-        .pipe($.dest('css/'));
+gulp.task('processcss', function () {
+	var processors = [
+		require('postcss-data-packer')({
+			dest: 'css/main_data.css'
+		})
+	];
+	gulp.src('css/main.css')
+		.pipe(postcss(processors))
+		.pipe(gulp.dest('css'));
 });
 
-// оставляем только закодированные данные из основного файла и оставляем только уникальные данные
-$.task('processcss--data', function () {
-    var processors = [
-        dataPacker({
-            dataFile: true,
-            pure: true
-        })
-    ];
-    $.src('css/main.css')
-        .pipe(plugins().postcss(processors))
-        .pipe(plugins().rename('main_data.css')) // создаём новый файл
-        .pipe($.dest('css/'));
-});
-
-$.task('default', function () {
-    $.watch('css/main.css', ['processcss', 'processcss--data']);
+gulp.task('default', function () {
+	gulp.watch('css/main.css', ['processcss']);
 });
 ```
 
@@ -103,42 +121,31 @@ $.task('default', function () {
 
 ```js
 module.exports = function(grunt) {
-    'use strict';
-    require('load-grunt-tasks')(grunt);
+	require('load-grunt-tasks')(grunt);
 
-    var dataPaker = require('postcss-data-packer');
+	grunt.initConfig({
+		postcss: {
+			files: {
+				options: {
+					map: false,
+					processors: [
+						require('postcss-data-packer')({
+							dest: 'css/main_data.css'
+						})
+					]
+				},
+				src: 'css/main.css'
+			}
+		}
+	});
 
-    grunt.initConfig({
-        postcss: {
-            data: {
-                options: {
-                    map: false,
-                    processors: [
-                        dataPaker()
-                    ]
-                },
-                src: 'css/main.css',
-                dest: 'css/main_data.css'
-            },
-            pure: {
-                options: {
-                    map: false,
-                    processors: [
-                        dataPaker({
-                            dataFile: false
-                        })
-                    ]
-                },
-                src: 'css/main.css'
-            }
-        }
-    });
-
-    return grunt.registerTask('default', ['postcss']);
+	return grunt.registerTask('default', ['postcss']);
 };
 ```
 
-И затем подключаем эти файлы в разметке:
+(остальные способы использования [в документации](https://github.com/postcss/postcss#usage) `PostCSS`)
+
+И затем подключаем эти файлы в разметке. Например, так:
 
 ```html
 <!-- До основного файла, чтобы упростить переопределение -->

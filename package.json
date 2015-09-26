@@ -1,10 +1,11 @@
 {
   "name": "postcss-data-packer",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "PostCSS plugin to move an embedded data into a separate file",
   "keywords": [
     "css",
     "postcss",
+    "postcss-plugin",
     "postcss-plugins",
     "data",
     "base64"
@@ -14,5 +15,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Ser-Gen/postcss-data-packer.git"
+  },
+  "dependencies": {
+    "fs-extra": "~0.24.0",
+    "postcss": "~5.0.5"
   }
 }
