@@ -21,6 +21,9 @@ function plugin (opts) {
 
 	return function (css, result) {
 
+		opts.from = result.opts.from;
+		opts.to = result.opts.to;
+
 		if (opts.dest !== false) {
 			generateDataFile(css, opts);
 		}
@@ -175,9 +178,11 @@ function generateDataFile (css, opts) {
 	};
 
 	var data = dataCSS.toResult({
-		to: opts.dest.path,
-		map: opts.dest.map
+		to: (typeof opts.dest.path === 'function') ? opts.dest.path(opts) : opts.dest.path,
+		map: (typeof opts.dest.map === 'function') ? opts.dest.map(opts) : opts.dest.map
 	});
+
+	if (!data.css.length) return;
 
 	fsExtra.outputFileSync(data.opts.to, data.css);
 
