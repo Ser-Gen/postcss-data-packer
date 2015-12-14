@@ -90,6 +90,19 @@ dataPacker({
 })
 ```
 
+Значениями параметров `dest.path` и `dest.path.map.annotation` также могут быть функции, которые должны возвращать строку.
+Пример использования (из #13):
+
+```js
+dataPacker({
+	dest: {
+		path: function (opts) {
+			return path.join('build/css', path.basename(opts.from, '.css') + '.data.css');
+		}
+	}
+})
+```
+
 
 ### Подключение
 

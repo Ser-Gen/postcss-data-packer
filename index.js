@@ -179,7 +179,7 @@ function generateDataFile (css, opts) {
 
 	var data = dataCSS.toResult({
 		to: (typeof opts.dest.path === 'function') ? opts.dest.path(opts) : opts.dest.path,
-		map: (typeof opts.dest.map === 'function') ? opts.dest.map(opts) : opts.dest.map
+		map: opts.dest.map
 	});
 
 	if (!data.css.length) return;
@@ -201,6 +201,7 @@ function extend (target, source) {
 	Object.keys(source).map(function (prop) {
 		prop in a && (a[prop] = source[prop]);
 	});
+	
 	return a;
 };
 
@@ -241,7 +242,8 @@ function getMapPath (opts) {
 	var result;
 
 	if (opts.map.annotation) {
-		result = path.dirname(opts.to) +'/'+ opts.map.annotation;
+		result = (typeof opts.map.annotation === 'function') ? opts.map.annotation(opts) : opts.map.annotation;
+		result = path.join(path.dirname(opts.to), result);
 	}
 	else {
 		result = opts.to +'.map';

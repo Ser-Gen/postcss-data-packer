@@ -97,6 +97,19 @@ dataPacker({
 })
 ```
 
+You can use functions as values of `dest.path` and `dest.path.map.annotation`. This functions must return strings.
+Example (from #13):
+
+```js
+dataPacker({
+	dest: {
+		path: function (opts) {
+			return path.join('build/css', path.basename(opts.from, '.css') + '.data.css');
+		}
+	}
+})
+```
+
 
 ### Using
 
