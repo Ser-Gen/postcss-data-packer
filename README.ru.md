@@ -91,7 +91,7 @@ dataPacker({
 ```
 
 Значениями параметров `dest.path` и `dest.path.map.annotation` также могут быть функции, которые должны возвращать строку.
-Пример использования (из #13):
+Пример использования (из [#13](https://github.com/Ser-Gen/postcss-data-packer/pull/13)):
 
 ```js
 dataPacker({

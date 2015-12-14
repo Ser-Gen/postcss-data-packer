@@ -98,7 +98,7 @@ dataPacker({
 ```
 
 You can use functions as values of `dest.path` and `dest.path.map.annotation`. This functions must return strings.
-Example (from #13):
+Example (from [#13](https://github.com/Ser-Gen/postcss-data-packer/pull/13)):
 
 ```js
 dataPacker({
