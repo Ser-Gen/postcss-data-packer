@@ -23,6 +23,7 @@ function plugin (opts) {
 
 		opts.from = result.opts.from;
 		opts.to = result.opts.to;
+		opts.map = result.opts.map;
 
 		if (opts.dest !== false) {
 			generateDataFile(css, opts);
@@ -187,7 +188,7 @@ function generateDataFile (css, opts) {
 	fsExtra.outputFileSync(data.opts.to, data.css);
 
 	if (data.map) {
-		fsExtra.outputFileSync(getMapPath(data.opts), data.map.toString());
+		fsExtra.outputFileSync(getMapPath(data.opts, opts), data.map.toString());
 	};
 
 	removeData(css);
@@ -238,15 +239,19 @@ function purifyValue (value) {
 };
 
 // генерируем пути к карте кода
-function getMapPath (opts) {
+function getMapPath (dataOpts, opts) {
 	var result;
 
-	if (opts.map.annotation) {
-		result = (typeof opts.map.annotation === 'function') ? opts.map.annotation(opts) : opts.map.annotation;
-		result = path.join(path.dirname(opts.to), result);
+	if (dataOpts.map.annotation) {
+		if (typeof dataOpts.map.annotation === 'function') {
+			result = dataOpts.map.annotation(dataOpts, opts);
+		}
+		else {
+			result = path.join(path.dirname(dataOpts.to), dataOpts.map.annotation);
+		};
 	}
 	else {
-		result = opts.to +'.map';
+		result = dataOpts.to +'.map';
 	};
 
 	return path.normalize(result);
