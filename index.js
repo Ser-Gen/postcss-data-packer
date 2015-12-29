@@ -174,14 +174,32 @@ function generateDataFile (css, opts) {
 		};
 	};
 
-	if (!opts.dest.map) {
-		opts.dest.map = false;
+	var dataOpts = {
+		to: (typeof opts.dest.path === 'function') ? opts.dest.path(opts) : opts.dest.path
 	};
 
-	var data = dataCSS.toResult({
-		to: (typeof opts.dest.path === 'function') ? opts.dest.path(opts) : opts.dest.path,
-		map: opts.dest.map
-	});
+	// если нет информации о карте кода
+	if (!opts.dest.map) {
+		opts.dest.map = false;
+	}
+
+	// если информация есть
+	else {
+		dataOpts.map = opts.dest.map;
+
+		// если есть информация о положении карты кода
+		if (opts.dest.map.annotation) {
+
+			// информация может возвращаться функцией
+			// а при генерации нужна строка
+			dataOpts.map.annotation = (typeof opts.dest.map.annotation === 'function') ? opts.dest.map.annotation(dataOpts, opts) : opts.dest.map.annotation;
+
+			// разделители должны быть универсальными
+			dataOpts.map.annotation = dataOpts.map.annotation.replace(new RegExp('\\' + path.sep, 'g'), '/');
+		};
+	};
+
+	var data = dataCSS.toResult(dataOpts);
 
 	if (!data.css.length) return;
 
@@ -243,12 +261,7 @@ function getMapPath (dataOpts, opts) {
 	var result;
 
 	if (dataOpts.map.annotation) {
-		if (typeof dataOpts.map.annotation === 'function') {
-			result = dataOpts.map.annotation(dataOpts, opts);
-		}
-		else {
-			result = path.join(path.dirname(dataOpts.to), dataOpts.map.annotation);
-		};
+		result = path.join(path.dirname(dataOpts.to), dataOpts.map.annotation);
 	}
 	else {
 		result = dataOpts.to +'.map';
