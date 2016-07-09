@@ -3,7 +3,7 @@ var path = require('path');
 var fsExtra = require('fs-extra');
 var postcss = require('postcss');
 
-var dataRegexp = /url\(["']?data/g;
+var dataRegexp = /url\(["']?data:/g;
 
 module.exports = postcss.plugin('postcss-data-packer', plugin);
 
